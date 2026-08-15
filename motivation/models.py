@@ -22,10 +22,15 @@ class ToolCall:
 class Usage:
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    reasoning_tokens: int = 0
 
     @property
     def total(self) -> int:
         return self.prompt_tokens + self.completion_tokens
+
+    @property
+    def output_tokens(self) -> int:
+        return max(self.completion_tokens - self.reasoning_tokens, 0)
 
 
 @dataclass
@@ -108,9 +113,12 @@ class OpenAICompatClient(ChatClient):
 
         usage = Usage()
         if getattr(resp, "usage", None):
+            det = getattr(resp.usage, "completion_tokens_details", None)
+            rt = getattr(det, "reasoning_tokens", 0) if det is not None else 0
             usage = Usage(
                 prompt_tokens=resp.usage.prompt_tokens or 0,
                 completion_tokens=resp.usage.completion_tokens or 0,
+                reasoning_tokens=rt or 0,
             )
 
         return Completion(

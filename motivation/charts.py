@@ -116,12 +116,38 @@ def token_efficiency(cell: pd.DataFrame, out: Path) -> Path:
     return path
 
 
+def tokens_breakdown(cell: pd.DataFrame, out: Path) -> Path:
+    if "reasoning_tokens" not in cell.columns:
+        return None
+    tr = cell.groupby("treatment_id").agg(
+        reasoning_tokens=("reasoning_tokens", "mean"),
+        output_tokens=("output_tokens", "mean"),
+    ).reset_index()
+    order = _sorted_treatments(tr["treatment_id"].tolist())
+    tr = tr.set_index("treatment_id").reindex(order).reset_index()
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    x = np.arange(len(tr))
+    ax.bar(x, tr["reasoning_tokens"], label="reasoning", color="#E76F51")
+    ax.bar(x, tr["output_tokens"], bottom=tr["reasoning_tokens"], label="output", color="#4C72B0")
+    ax.set_xticks(x)
+    ax.set_xticklabels(tr["treatment_id"])
+    ax.set_ylabel("Mean tokens")
+    ax.set_title("Reasoning vs output tokens by treatment")
+    ax.legend()
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout()
+    path = out / "tokens_breakdown.png"
+    fig.savefig(path, dpi=140)
+    plt.close(fig)
+    return path
+
+
 def build_all(df: pd.DataFrame, cell: pd.DataFrame, delta: pd.DataFrame, out: Path) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     paths = [sr_bar(cell, out), sr_delta(delta, out), heatmap(cell, out)]
-    for fn in (latency_box, token_efficiency):
+    for fn in (latency_box, token_efficiency, tokens_breakdown):
         try:
-            p = fn(df, out)
+            p = fn(df, out) if fn is latency_box else fn(cell, out)
             if p:
                 paths.append(p)
         except Exception:  # noqa: BLE001

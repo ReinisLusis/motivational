@@ -129,7 +129,11 @@ def build_report(summary: dict, meta: dict, figures: list[Path], out_path: Path)
     lines.append("")
     lines.append("## Overall results")
     lines.append("")
-    lines.append(_md_table(tr, ["treatment_id", "treatment_name", "success_rate", "quality", "latency_s", "tokens", "errors"]))
+    cols = ["treatment_id", "treatment_name", "success_rate", "quality", "latency_s", "tokens"]
+    for c in ["reasoning_tokens", "output_tokens", "sr_per_1k_tokens", "errors"]:
+        if c in tr.columns:
+            cols.append(c)
+    lines.append(_md_table(tr, cols))
     lines.append("")
     lines.append("## Effect vs control (T0)")
     lines.append("")

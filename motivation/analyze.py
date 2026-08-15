@@ -11,6 +11,8 @@ METRIC_COLS = [
     "tokens",
     "prompt_tokens",
     "completion_tokens",
+    "reasoning_tokens",
+    "output_tokens",
     "tool_calls",
     "errors",
     "cot_depth",
@@ -42,10 +44,13 @@ def per_treatment_summary(cell: pd.DataFrame) -> pd.DataFrame:
         quality=("quality", "mean"),
         latency_s=("latency_s", "mean"),
         tokens=("tokens", "mean"),
+        reasoning_tokens=("reasoning_tokens", "mean"),
+        output_tokens=("output_tokens", "mean"),
         tool_calls=("tool_calls", "mean"),
         errors=("errors", "mean"),
         cot_depth=("cot_depth", "mean"),
     ).reset_index()
+    g["sr_per_1k_tokens"] = (g["success_rate"] / g["tokens"] * 1000).round(3)
     return g.round(4)
 
 

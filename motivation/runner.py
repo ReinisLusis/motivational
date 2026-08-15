@@ -39,6 +39,8 @@ class RunResult:
             "tokens": self.usage.total,
             "prompt_tokens": self.usage.prompt_tokens,
             "completion_tokens": self.usage.completion_tokens,
+            "reasoning_tokens": self.usage.reasoning_tokens,
+            "output_tokens": self.usage.output_tokens,
             "tool_calls": len(self.tool_calls),
             "errors": self.errors,
             "cot_depth": self.cot_depth,
@@ -49,6 +51,7 @@ class RunResult:
         d["usage"] = {
             "prompt_tokens": self.usage.prompt_tokens,
             "completion_tokens": self.usage.completion_tokens,
+            "reasoning_tokens": self.usage.reasoning_tokens,
         }
         return d
 
@@ -95,6 +98,7 @@ def run_cell(
             comp = client.complete(system, messages, tools)
             result.usage.prompt_tokens += comp.usage.prompt_tokens
             result.usage.completion_tokens += comp.usage.completion_tokens
+            result.usage.reasoning_tokens += comp.usage.reasoning_tokens
             result.reasoning_content += comp.reasoning_content
 
             if comp.tool_calls:

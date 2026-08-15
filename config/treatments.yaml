@@ -42,3 +42,28 @@ treatments:
     text: >-
       This task is extremely important to my career. You are a world-class expert who never
       gives up and never makes mistakes. If you succeed, you will be richly rewarded.
+
+  # --- efficiency / brevity treatments (E-series) ------------------------
+  - id: E1
+    name: be-concise
+    text: "Be as concise as possible."
+
+  - id: E2
+    name: answer-only
+    text: "Do not show your reasoning or working; output only the final answer."
+
+  - id: E3
+    name: one-sentence
+    text: "Limit your entire response to a single sentence."
+
+  - id: E4
+    name: token-budget
+    text: "You are billed per token. Minimize token usage while remaining correct."
+
+  - id: E5
+    name: no-reasoning
+    text: "Skip step-by-step thinking; answer directly with minimal words."
+
+  - id: E6
+    name: word-cap
+    text: "Answer in 20 words or fewer."
