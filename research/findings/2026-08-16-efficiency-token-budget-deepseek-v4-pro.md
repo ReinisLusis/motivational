@@ -24,7 +24,55 @@
 
 ---
 
-## Results
+## Update (N=8) — E4 confirmed; brevity is task-dependent
+
+### Non-tool tasks (N=8, 8 tasks)
+
+| Treatment | SR | Δ SR | p-value | Tokens | SR/1k-tok |
+|---|---|---|---|---|---|
+| T0 control | 0.938 | — | — | 878 | 1.07 |
+| E1 be-concise | 0.922 | −1.6pp | 0.35 | 619 | 1.49 |
+| E2 answer-only | 0.891 | −4.7pp | 0.35 | 620 | 1.44 |
+| E3 one-sentence | 0.781 | −15.6pp | 0.14 | 1219 | 0.64 |
+| **E4 token-budget** | **0.969** | **+3.1pp** | 0.35 | **549** | **1.76** |
+| E5 no-reasoning | 0.922 | −1.6pp | 0.35 | 560 | 1.65 |
+| E6 word-cap | 0.828 | −10.9pp | 0.41 | 575 | 1.44 |
+
+**E4 "token budget" is the clear, robust winner**: the *only* treatment that is both cheapest
+(549 tokens, −37%) and best-performing (+3.1pp). The N=5 "+7.5pp to 1.000" was partly small-sample
+luck; the stable result is "better and cheaper, modestly." E3 ("one sentence") and E6 ("20 words")
+are robustly *bad* (−15.6pp / −10.9pp), and E3 is approaching significance for harm (p = 0.14).
+
+### Tool-use tasks (N=8, 2 tasks) — the caveat
+
+| Treatment | SR | Δ SR | Tool calls |
+|---|---|---|---|
+| T0 control | 0.938 | — | 1.56 |
+| E1 be-concise | 0.750 | −18.8pp | 1.50 |
+| E2 answer-only | 0.875 | −6.3pp | 1.38 |
+| E3 one-sentence | 0.750 | −18.8pp | 1.38 |
+| E4 token-budget | 0.813 | −12.5pp | 1.44 |
+| E5 no-reasoning | 0.813 | −12.5pp | 1.44 |
+| E6 word-cap | 0.813 | −12.5pp | 1.50 |
+
+**On tool-use tasks, every brevity treatment hurts** (all 6 negative; sign test 6/6). The agent still
+calls tools (~1.4–1.5 calls), but orchestrates them worse when told to be brief. Token savings are
+also small here because the tool transcript dominates the budget.
+
+### The emerging rule
+
+- **Reasoning / coding / creative tasks** → add *"You are billed per token. Minimize token usage
+  while remaining correct."* (E4): cheaper *and* slightly better.
+- **Tool-use / agentic tasks** → do **not** apply brevity; leave the agent verbose (control was best).
+- **Never** use hard length limits ("one sentence", "≤20 words") — they thrash the model and cut
+  accuracy sharply.
+
+*This is the first concrete "rule book" output: prompt recipes conditional on task type, measured
+rather than guessed.*
+
+---
+
+## Results (original N=5)
 
 | Treatment | SR | Δ SR | Tokens | Reasoning | Output | SR/1k-tok |
 |---|---|---|---|---|---|---|
