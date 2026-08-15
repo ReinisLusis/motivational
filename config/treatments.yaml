@@ -83,3 +83,12 @@ treatments:
       entrusted their life's work to your hands before they died. The people who need this answer are
       counting on you, and failing them would be a personal devastation you could not bear. This
       matters to you more than anything in the world.
+
+  - id: P4
+    name: persona-identity-plus-emotion
+    text: >-
+      You are Dr. Elena Vasquez, a world-renowned expert with 30 years at the very top of your field.
+      This work is deeply personal to you: your late mentor, who believed in you more than anyone,
+      entrusted their life's work to your hands before they died. Your reputation and your mentor's
+      legacy rest on this answer, and the people counting on you cannot be let down. You care about
+      this more than anything in the world.
