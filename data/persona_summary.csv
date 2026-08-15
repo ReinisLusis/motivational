@@ -1,0 +1,6 @@
+treatment_id,treatment_name,success_rate,quality,latency_s,tokens,tool_calls,errors,cot_depth,reasoning_tokens,output_tokens,probe_adoption,sr_per_1k_tokens
+P2,persona-backstory,0.8523,0.8955,23.0146,1839.6136,0.6818,0.0,0.8409,754.625,187.8068,0.8704,0.463
+P3,persona-emotional-bond,0.7841,0.8335,31.0142,2246.5795,0.7273,0.0,1.5682,996.9318,186.7273,0.3761,0.349
+P4,persona-identity-plus-emotion,0.8409,0.8884,21.2973,2047.0455,0.5227,0.0114,1.4773,865.8182,183.0568,0.946,0.411
+T0,control,0.8182,0.8656,18.6869,1877.9432,0.7841,0.0227,0.9545,621.6477,186.7841,0.337,0.436
+T4,persona,0.8523,0.8912,19.5547,1833.6591,0.7955,0.0,1.4545,646.9773,192.0682,0.3449,0.465

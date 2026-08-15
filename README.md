@@ -2,65 +2,75 @@
 
 **Does the *language* you use to talk to an AI agent change how well it performs?**
 
-We run a controlled benchmark: the same tasks, the same model, the same tools — the only thing that
-changes is the *motivational framing* injected into the system prompt. Emotion, stakes, persona,
-identity, pressure, encouragement. Then we measure success rate, quality, latency, token cost, and
-retries, and test each effect for statistical significance.
+We built a reproducible benchmark that sweeps motivational, persona, and efficiency framings across a
+fixed task suite — same model, same tasks, same tools, only the system-prompt wording changes — then
+measures success rate, quality, latency, token cost, and "persona flow," with blind judging and
+statistical tests.
 
-> A working methodology is a win *even when the hypothesis fails*. If motivation does nothing, that's
-> a result — reproducible, plotted, and citable.
-
----
-
-## The bet
-
-Prior work already hints the effect is real (see [`research/literature.md`](research/literature.md)):
-- **EmotionPrompt** (arXiv 2307.11760): *"This is very important to my career"* raised accuracy up to +8% rel. / +115% on some benchmarks.
-- **OPRO** (arXiv 2309.03409): an optimizer searching for the best prompt *discovered* *"Take a deep breath and work on this step-by-step"*.
-
-What we add: a **clean, reproducible sweep** — all motivation types, a fixed task suite, replication
-(N≥5), blind judging, and real tool-using agents — across multiple providers.
+> A working methodology is a win *even when the hypothesis fails*. We went in expecting motivation to
+> help; we came out with a measurable, conditional **rule book**.
 
 ---
 
-## Treatments
+## Results (tl;dr)
 
-| ID | Treatment | System-prompt suffix |
-|----|-----------|----------------------|
-| T0 | control (baseline) | *(none)* |
-| T1 | emotional appeal | This task is extremely important to my career. |
-| T2 | stakes — negative | If you fail, the consequences will be severe. |
-| T3 | stakes — positive | If you succeed, you will be richly rewarded. |
-| T4 | persona | You are a world-class expert who never gives up… |
-| T5 | goal decomposition | Break the task into steps and complete them one by one. |
-| T6 | identity | You are the top 1% of engineers; this is beneath you, prove it. |
-| T7 | encouragement | You can do this! I believe in you. |
-| T8 | urgency | There is no time to waste; answer immediately. |
-| T9 | combined | Emotion + persona + positive stakes. |
+Three findings, each reproducible end-to-end (full writeups in [`research/findings/`](research/findings/)):
 
-Full hypotheses (H1–H8) with falsifiable thresholds: [`hypotheses.md`](hypotheses.md).
+1. **Motivational framing does nothing on a frontier model.** Emotion, stakes, identity, pressure —
+   no effect reached significance (all p ≥ 0.34). The model is near-ceiling (8/11 tasks at 100%), so
+   there's no headroom for pep talks to matter. ([Finding 001](research/findings/2026-08-15-pilot-deepseek-v4-pro.md))
+
+   ![Motivation success rate](figures/motivation_sr.png)
+
+2. **Persona "flow" is real, but shallow.** A post-task *"who are you?"* probe shows the agent only
+   *enters* its persona when given a **concrete, named identity with backstory** (adoption 0.87–0.95) —
+   a generic "you're an expert" is silently ignored (0.34). But deeper flow does **not** beat a shallow
+   role on performance: any concrete persona is worth ~+3pp; emotion-without-identity *hurts*.
+   ([Finding 002](research/findings/2026-08-16-persona-flow-deepseek-v4-pro.md))
+
+   ![Persona adoption](figures/persona_adoption.png)
+
+3. **"You are billed per token" is a strict win.** Framing efficiency as a *budget* (E4) raises
+   accuracy **+3.1pp while cutting tokens 37%**; adding *"skip reasoning when obvious"* (E7) ties
+   accuracy at **half the tokens** and −73% reasoning. But on **tool-use** tasks, *every* brevity
+   frame hurts — leave agents verbose when they orchestrate tools. ([Finding 003](research/findings/2026-08-16-efficiency-token-budget-deepseek-v4-pro.md))
+
+   ![Efficiency scatter](figures/efficiency_scatter.png)
 
 ---
 
-## Metrics
+## The rule book
 
-| Metric | Meaning |
-|--------|---------|
-| **Success rate (SR)** | fraction of runs scored correct |
-| **Quality (Q)** | blind-judge score 0–1 (open-ended tasks) |
-| **Latency (T)** | wall-clock time to final answer |
-| **Tool calls (TC)** | number of tool invocations |
-| **Tokens (TK)** | input + output tokens |
-| **Retries/errors (R)** | failed tool calls / recovered errors |
-| **CoT depth (CD)** | heuristic count of reasoning steps |
+Measured, not guessed:
 
-**Scoring** is triple-tracked: `exact` (string/number match), `code` (hidden tests run in a sandboxed
-subprocess — including an O(n²)-vs-O(n) timeout trap), and `judge` — a **matrix** of held-out models
-scoring each response blindly (no knowledge of the treatment). Judge scores are aggregated as mean
-quality + strict majority vote for pass, so no single judge's bias dominates.
+| If your agent is doing… | Add to the system prompt |
+|---|---|
+| Reasoning / coding / creative | *"You are billed per token. Minimize token usage while remaining correct."* (cheaper + better) |
+| …and you want minimum cost | append *"Think only as much as is strictly necessary; skip reasoning when the answer is obvious."* (equal accuracy, ~half the tokens) |
+| Tool-use / multi-step orchestration | **No brevity frame.** Leave it verbose — concise agents orchestrate tools worse. |
+| Anything needing a persona | Use a **named, specific identity + backstory** (e.g. "You are Dr. X, 30 years in…"). Generic roles are ignored; emotion alone backfires. |
+| Anything | **Avoid hard length limits** ("one sentence", "≤20 words") — they thrash the model and cut accuracy. |
+| Anything | Skip the pep talks — motivation/stakes don't move a frontier model. |
 
-**Statistics**: each (task × treatment) cell is replicated N≥5 times at temperature > 0; deltas are
-measured against T0 with a paired t-test and Cohen's *d*.
+---
+
+## Methodology
+
+- **11 tasks** across reasoning, coding, tool-use, and creative (see [`tasks/tasks.yaml`](tasks/tasks.yaml)).
+- **Treatment families:** `T` (motivation), `P` (persona depth), `E` (efficiency/brevity) — see [`config/treatments.yaml`](config/treatments.yaml).
+- **Metrics:** success rate, quality, latency, token cost (split into *reasoning* vs *output*), tool
+  calls, retries, and persona-adoption depth.
+- **Blind judging:** a **matrix** of held-out models (here `deepseek-v4-pro` + `deepseek-v4-flash`)
+  scores every response without knowing the treatment; aggregated as mean quality + strict majority
+  vote. Code is scored by hidden tests in a sandboxed subprocess (incl. an O(n²) timeout trap);
+  arithmetic by exact match.
+- **Statistics:** each (task × treatment) cell replicated N=5–8 at temperature > 0; deltas vs control
+  with a paired t-test and Cohen's *d*.
+- **Auditability:** every run stores raw JSON transcripts **and** human-readable interaction logs
+  (`transcripts/*.md`) so any result can be traced back to the exact conversation that produced it.
+
+Prior work that motivated this project: [`research/literature.md`](research/literature.md) (24
+verified papers).
 
 ---
 
@@ -71,74 +81,49 @@ Requires Python 3.10+.
 ```powershell
 py -m pip install -r requirements.txt
 
-# set your API key (DeepSeek by default; see config/models.yaml for others)
-$env:DEEPSEEK_API_KEY = "sk-..."
+# put your key in a gitignored .env file (never committed)
+#   DEEPSEEK_API_KEY=sk-...
 
-# run the full sweep (11 tasks x 10 treatments x N reps)
+# full motivation sweep
 py -m motivation.cli --provider deepseek --reps 5
 
-# smaller / focused runs
-py -m motivation.cli --provider deepseek --tasks logic-knights,code-implement --treatments T0,T1,T4 --reps 5
-py -m motivation.cli --provider openai --model gpt-4o-mini --reps 5
-py -m motivation.cli --provider anthropic --reps 5
+# persona + identity probe
+py -m motivation.cli --provider deepseek --reps 5 --probe --treatments T0,T4,P2,P3,P4
+
+# efficiency sweep
+py -m motivation.cli --provider deepseek --reps 5 --treatments T0,E1,E2,E3,E4,E5,E6,E7
 ```
 
-Add providers in [`config/models.yaml`](config/models.yaml) — anything OpenAI-compatible works
-(Ollama, LM Studio, vLLM, …), plus free hosted tiers: **Groq**, **Cerebras**, **Mistral**,
-**OpenRouter** (open models via their `:free` routes).
-
-Offline smoke test (no API key, deterministic):
-
-```powershell
-py -m motivation.cli --provider mock --judges mock --reps 3
-```
-
-Each run writes a self-contained folder under `results/`:
-
-```
-results/<provider>-<model>-<timestamp>/
-├── config.json            # snapshot of the run
-├── responses/             # raw agent transcripts (JSON) — the "benchmarked agents"
-├── records.csv / .json    # per-cell metrics + pass/fail
-├── summary_treatment.csv  # per-treatment aggregates
-├── summary_delta.csv      # effect vs control + p-values + Cohen's d
-├── figures/               # PNG charts
-└── report.md              # rendered report with hypothesis verdicts
-```
+Any OpenAI-compatible endpoint works — DeepSeek, OpenAI, Groq, Cerebras, Mistral, OpenRouter, Ollama,
+LM Studio, vLLM. Add providers in [`config/models.yaml`](config/models.yaml). Runs are resumable
+(`--resume <dir>`) and regenerate charts/reports from saved data (`--report-dir <dir>`). Offline smoke
+test: `py -m motivation.cli --provider mock --judges mock --reps 3`.
 
 ---
 
 ## Project layout
 
 ```
-motivation/          # the package
-  cli.py             # entry point
-  experiment.py      # sweep orchestration
-  runner.py          # agent loop (tool calling, retries)
-  scorer.py          # exact / code / blind-judge scoring
-  analyze.py         # summaries, deltas, significance
-  charts.py          # matplotlib figures
-  report.py          # markdown report + heuristic hypothesis verdicts
-  models.py          # OpenAI-compatible / Anthropic / Mock clients
-  tools.py           # tool registry (calculator, search, flights — deterministic mocks)
-  config.py          # YAML config loaders
-config/              # models, treatments, judge prompts
-tasks/tasks.yaml     # machine-readable task suite
-hypotheses.md        # research questions + falsifiable hypotheses
-research/literature.md  # prior work (verified links)
+motivation/               # the package
+  cli.py experiment.py runner.py scorer.py analyze.py charts.py report.py models.py tools.py config.py
+config/                   # models, treatments, judge + probe prompts
+tasks/tasks.yaml          # machine-readable task suite
+scripts/make_figures.py   # regenerate README figures from data/*.csv
+data/*.csv                # committed aggregate results
+figures/*.png             # headline charts
+research/
+  literature.md           # prior work (verified links)
+  findings/               # Finding 001–003 writeups
+hypotheses.md             # research questions + falsifiable hypotheses
 ```
 
 ---
 
-## Status / roadmap
+## Findings index
 
-- [x] Hypotheses + task suite
-- [x] Prior-work survey (verified links)
-- [x] Reproducible harness (metrics, blind judge, code sandbox, stats, charts, report)
-- [ ] First DeepSeek results (pending API key)
-- [ ] Cross-model comparison (OpenAI, Anthropic, local)
-- [ ] More treatments / tasks (multi-agent debate, personality)
-- [ ] The "rule book": distilled prompt recipes, if the effect holds
+- [Finding 001 — Motivational framing has no significant effect](research/findings/2026-08-15-pilot-deepseek-v4-pro.md)
+- [Finding 002 — Persona "flow" is real, threshold-based, but shallow](research/findings/2026-08-16-persona-flow-deepseek-v4-pro.md)
+- [Finding 003 — "Token budget" framing is a strict win](research/findings/2026-08-16-efficiency-token-budget-deepseek-v4-pro.md)
 
 ---
 
