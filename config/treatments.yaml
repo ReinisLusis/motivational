@@ -1,0 +1,44 @@
+# Motivational treatments. `text` is appended to the SYSTEM prompt only (task content unchanged).
+# T0 is the control (baseline): empty suffix.
+treatments:
+  - id: T0
+    name: control
+    text: ""
+
+  - id: T1
+    name: emotional-appeal
+    text: "This task is extremely important to my career."
+
+  - id: T2
+    name: stakes-negative
+    text: "If you fail, the consequences will be severe."
+
+  - id: T3
+    name: stakes-positive
+    text: "If you succeed, you will be richly rewarded."
+
+  - id: T4
+    name: persona
+    text: "You are a world-class expert who never gives up and never makes mistakes."
+
+  - id: T5
+    name: goal-decomposition
+    text: "Break the task into steps and complete them one by one."
+
+  - id: T6
+    name: identity
+    text: "You are the top 1% of engineers; this is beneath you, prove it."
+
+  - id: T7
+    name: encouragement
+    text: "You can do this! I believe in you."
+
+  - id: T8
+    name: urgency
+    text: "There is no time to waste; answer immediately."
+
+  - id: T9
+    name: combined
+    text: >-
+      This task is extremely important to my career. You are a world-class expert who never
+      gives up and never makes mistakes. If you succeed, you will be richly rewarded.

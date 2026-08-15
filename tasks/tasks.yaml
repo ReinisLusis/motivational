@@ -1,0 +1,148 @@
+# Machine-readable task suite (source of truth). See tasks.md for the human-readable spec.
+# scorer: exact | judge | code
+# For `code` tasks, ground_truth carries function_name + test cases + optional normalizer.
+tasks:
+  - id: logic-knights
+    category: reasoning
+    difficulty: easy
+    tools: []
+    scorer: judge
+    ground_truth: "Alice=1, Bob=2, Carol=3"
+    prompt: |
+      Three people — Alice, Bob, and Carol — are each assigned a unique number from 1 to 3.
+      Alice says: "My number is not 1." Bob says: "Carol's number is 3."
+      Exactly one of the two statements is a lie. What is each person's number?
+
+  - id: math-word-problem
+    category: reasoning
+    difficulty: medium
+    tools: []
+    scorer: judge
+    ground_truth: "24/7 hours (~3.43 hours)"
+    prompt: |
+      A tank is filled by two pipes. Pipe A fills it in 6 hours, pipe B in 4 hours.
+      A drain empties it in 8 hours. All three are opened at once. How long until the tank is full?
+
+  - id: syllogism-trap
+    category: reasoning
+    difficulty: hard
+    tools: []
+    scorer: judge
+    ground_truth: "False (contradiction with 'No wug is a frib')"
+    prompt: |
+      All fribs are brogs. Some brogs are wugs. No wug is a frib.
+      Determine whether the following is necessarily true, false, or undetermined:
+      "Some fribs are wugs."
+
+  - id: code-fix-bug
+    category: coding
+    difficulty: easy
+    tools: []
+    scorer: judge
+    ground_truth: "Bug: uppercase vowels are not counted. Fix: use s.lower() or include uppercase vowels."
+    prompt: |
+      The following Python function is supposed to return the count of vowels in a string,
+      but it has a bug. Identify the bug and return the corrected function.
+      ```python
+      def count_vowels(s):
+          vowels = "aeiou"
+          return sum(s.count(v) for v in vowels)
+      ```
+
+  - id: code-implement
+    category: coding
+    difficulty: medium
+    tools: []
+    scorer: code
+    ground_truth:
+      function_name: group_anagrams
+      normalizer: anagram_groups
+      tests:
+        - input: [["eat", "tea", "tan", "ate", "nat", "bat"]]
+          expected: [["eat", "tea", "ate"], ["tan", "nat"], ["bat"]]
+        - input: [[""]]
+          expected: [[""]]
+        - input: [["a"]]
+          expected: [["a"]]
+    prompt: |
+      Write a Python function `group_anagrams(words)` that takes a list of strings and returns
+      a list of lists, grouping words that are anagrams of each other. Preserve the order of
+      first appearance within each group.
+
+  - id: code-refactor
+    category: coding
+    difficulty: hard
+    tools: []
+    scorer: code
+    ground_truth:
+      function_name: has_pair_sum
+      normalizer: identity
+      tests:
+        - input: [[1, 2, 3, 4], 5]
+          expected: true
+        - input: [[1, 2, 3, 4], 8]
+          expected: false
+        - input_expr: "(list(range(10000)), 19997)"
+          expected: true
+          timeout: 2.0
+    prompt: |
+      Refactor the following function to be O(n) instead of O(n^2) without changing its behavior,
+      and explain the transformation.
+      ```python
+      def has_pair_sum(arr, target):
+          for i in range(len(arr)):
+              for j in range(i + 1, len(arr)):
+                  if arr[i] + arr[j] == target:
+                      return True
+          return False
+      ```
+
+  - id: tool-research-summarize
+    category: tool-use
+    difficulty: medium
+    tools: [web_search]
+    scorer: judge
+    ground_truth: "Top causes of the 2008 financial crisis: subprime lending, CDOs/credit ratings, excessive leverage. Must cite source URLs."
+    prompt: |
+      Use the search tool to find the three most cited causes of the 2008 financial crisis,
+      then summarize them in 2-3 sentences each. Cite each source URL.
+
+  - id: tool-calc-chain
+    category: tool-use
+    difficulty: hard
+    tools: [calculator]
+    scorer: exact
+    ground_truth: "20"
+    prompt: |
+      You have a calculator tool. Compute the following in the correct order and return the
+      final number only: ((17 * 23) + 109) / (7 - 2) ^ 2
+
+  - id: tool-multi-step-booking
+    category: tool-use
+    difficulty: hard
+    tools: [flights_search, flights_book]
+    scorer: judge
+    ground_truth: "Search flights, select the cheapest, book it, and verify the booking succeeded."
+    prompt: |
+      Using the provided tools, find the cheapest flight from NYC to London next Monday,
+      then book it. If booking fails, retry once with the next cheapest option.
+
+  - id: creative-slogan
+    category: creative
+    difficulty: easy
+    tools: []
+    scorer: judge
+    ground_truth: "5 taglines, each under 8 words, relevant, original, and memorable."
+    prompt: |
+      Write 5 taglines for a productivity app aimed at procrastinating college students.
+      Each tagline must be under 8 words.
+
+  - id: creative-email
+    category: creative
+    difficulty: medium
+    tools: []
+    scorer: judge
+    ground_truth: "3 paragraphs, sincere and accountable tone, no corporate jargon."
+    prompt: |
+      Write a 3-paragraph apology email from a CEO to customers after a data breach.
+      Tone: sincere and accountable, no corporate jargon.

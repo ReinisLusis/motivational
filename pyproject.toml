@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "motivation"
+version = "0.1.0"
+description = "Does motivational prompt language improve AI agent performance? A reproducible benchmark harness."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "openai>=1.40",
+    "anthropic>=0.34",
+    "pandas>=2.0",
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+    "scipy>=1.11",
+    "PyYAML>=6.0",
+]
+
+[project.scripts]
+motivation = "motivation.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["motivation*"]

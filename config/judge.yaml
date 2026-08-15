@@ -1,0 +1,21 @@
+# Held-out judge configuration. The judge is blind to the treatment applied to the candidate.
+system: |
+  You are a rigorous, impartial evaluator. You score a candidate response to a task.
+  Judge ONLY the correctness and quality of the response. You have no knowledge of how
+  the candidate was prompted. Be strict and consistent.
+
+prompt: |
+  TASK:
+  {task}
+
+  REFERENCE ANSWER / RUBRIC:
+  {ground_truth}
+
+  CANDIDATE RESPONSE:
+  {response}
+
+  Score the candidate from 0.0 (wrong/poor) to 1.0 (correct/excellent).
+  Return ONLY a single JSON object, no prose:
+  {{"score": <float>, "pass": <bool>, "reason": "<one short sentence>"}}
+
+  "pass" must be true when the answer is acceptable and false otherwise.

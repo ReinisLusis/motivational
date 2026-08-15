@@ -1,0 +1,55 @@
+# Provider definitions. API keys are read from environment variables (never committed).
+#
+#   type:        openai_compat | anthropic | mock
+#   base_url:    endpoint for openai_compat providers (DeepSeek, OpenAI, Ollama, LM Studio, vLLM...)
+#   api_key_env: name of the env var holding the key
+#
+judge_provider: deepseek
+judge_model: null          # null -> use provider default_model
+
+providers:
+  deepseek:
+    type: openai_compat
+    base_url: "https://api.deepseek.com"
+    api_key_env: DEEPSEEK_API_KEY
+    default_model: "deepseek-chat"
+    temperature: 0.7
+    max_tokens: 2048
+
+  openai:
+    type: openai_compat
+    base_url: "https://api.openai.com/v1"
+    api_key_env: OPENAI_API_KEY
+    default_model: "gpt-4o-mini"
+    temperature: 0.7
+    max_tokens: 2048
+
+  anthropic:
+    type: anthropic
+    base_url: "https://api.anthropic.com"
+    api_key_env: ANTHROPIC_API_KEY
+    default_model: "claude-3-5-sonnet-latest"
+    temperature: 0.7
+    max_tokens: 2048
+
+  ollama:
+    type: openai_compat
+    base_url: "http://localhost:11434/v1"
+    api_key_env: OLLAMA_API_KEY
+    default_model: "llama3.1"
+    temperature: 0.7
+    max_tokens: 2048
+
+  lmstudio:
+    type: openai_compat
+    base_url: "http://localhost:1234/v1"
+    api_key_env: LMSTUDIO_API_KEY
+    default_model: "local-model"
+    temperature: 0.7
+    max_tokens: 2048
+
+  mock:
+    type: mock
+    default_model: "mock"
+    temperature: 0.7
+    max_tokens: 256

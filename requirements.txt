@@ -1,0 +1,7 @@
+openai>=1.40
+anthropic>=0.34
+pandas>=2.0
+numpy>=1.26
+matplotlib>=3.8
+scipy>=1.11
+PyYAML>=6.0
