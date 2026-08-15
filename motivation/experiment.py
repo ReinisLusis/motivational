@@ -106,6 +106,8 @@ def run_experiment(
         records = _load_records(run_dir)
         done = {(r["task_id"], r["treatment_id"], r["run_index"]) for r in records}
         meta = json.loads((run_dir / "config.json").read_text(encoding="utf-8")) if (run_dir / "config.json").exists() else {}
+        meta["reps"] = reps
+        meta["date"] = time.strftime("%Y-%m-%d %H:%M:%S")
     else:
         ts = time.strftime("%Y%m%d-%H%M%S")
         run_dir = (out or Path("results")) / f"{provider_name}-{subject_client.model}-{ts}"
