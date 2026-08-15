@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .experiment import run_experiment
+from .experiment import report_from_dir, run_experiment
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -27,8 +27,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Comma-separated judge specs 'provider[:model]' (e.g. 'deepseek:deepseek-chat,ollama:llama3.2'). Default: config/models.yaml judges.",
     )
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--resume", default=None, help="Resume an existing run dir (skips completed cells)")
+    p.add_argument("--report-dir", default=None, help="Regenerate report/charts from an existing run dir (no API calls)")
 
     args = p.parse_args(argv)
+
+    if args.report_dir:
+        report_from_dir(Path(args.report_dir))
+        return 0
 
     def _split(s):
         return [x.strip() for x in s.split(",") if x.strip()] if s and s != "all" else None
@@ -44,6 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         out=Path(args.out),
         seed=args.seed,
         judges=_split(args.judges),
+        resume=Path(args.resume) if args.resume else None,
     )
     return 0
 

@@ -8,8 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from pathlib import Path
 
-import pandas as pd
-
 from .analyze import make_df, summarize
 from .charts import build_all
 from .config import (
@@ -39,6 +37,36 @@ def _select_treatments(all_tr, flt):
     return [by_id[i] for i in flt if i in by_id]
 
 
+def _load_records(run_dir: Path) -> list[dict]:
+    jl = run_dir / "records.jsonl"
+    if jl.exists():
+        return [json.loads(l) for l in jl.read_text(encoding="utf-8").splitlines() if l.strip()]
+    j = run_dir / "records.json"
+    if j.exists():
+        return json.loads(j.read_text(encoding="utf-8"))
+    return []
+
+
+def _write_summary(df, run_dir: Path):
+    summary = summarize(df)
+    summary["treatment"].to_csv(run_dir / "summary_treatment.csv", index=False)
+    summary["cell"].to_csv(run_dir / "summary_cell.csv", index=False)
+    summary["delta"].to_csv(run_dir / "summary_delta.csv", index=False)
+    return summary
+
+
+def report_from_dir(run_dir: Path) -> Path:
+    """Regenerate summaries, charts and report from a run dir (no API calls)."""
+    records = _load_records(run_dir)
+    if not records:
+        raise ValueError(f"No records found in {run_dir}")
+    df = make_df(records)
+    summary = _write_summary(df, run_dir)
+    meta = json.loads((run_dir / "config.json").read_text(encoding="utf-8")) if (run_dir / "config.json").exists() else {}
+    figures = build_all(df, summary["cell"], summary["delta"], run_dir / "figures")
+    return build_report(summary, meta, figures, run_dir / "report.md")
+
+
 def run_experiment(
     provider_name: str,
     model: str | None = None,
@@ -50,6 +78,7 @@ def run_experiment(
     out: Path | None = None,
     seed: int = 42,
     judges: list[str] | None = None,
+    resume: Path | None = None,
 ) -> Path:
     providers = load_providers()
     provider = providers[provider_name]
@@ -68,29 +97,37 @@ def run_experiment(
     tasks = _select_tasks(all_tasks, tasks)
     judge_cfg = load_judge_config()
 
-    ts = time.strftime("%Y%m%d-%H%M%S")
-    run_dir = (out or Path("results")) / f"{provider_name}-{subject_client.model}-{ts}"
+    if resume is not None:
+        run_dir = resume
+        records = _load_records(run_dir)
+        done = {(r["task_id"], r["treatment_id"], r["run_index"]) for r in records}
+        meta = json.loads((run_dir / "config.json").read_text(encoding="utf-8")) if (run_dir / "config.json").exists() else {}
+    else:
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        run_dir = (out or Path("results")) / f"{provider_name}-{subject_client.model}-{ts}"
+        records = []
+        done = set()
+        meta = {
+            "provider": provider_name,
+            "model": subject_client.model,
+            "judges": [f"{c.provider.name}/{c.model}" for c in judge_clients],
+            "reps": reps,
+            "n_tasks": len(tasks),
+            "n_treatments": len(trs),
+            "temperature": provider.temperature,
+            "seed": seed,
+            "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "treatments": [t.id for t in trs],
+            "tasks": [t.id for t in tasks],
+        }
+
     (run_dir / "responses").mkdir(parents=True, exist_ok=True)
     (run_dir / "figures").mkdir(parents=True, exist_ok=True)
-
-    meta = {
-        "provider": provider_name,
-        "model": subject_client.model,
-        "judges": [f"{c.provider.name}/{c.model}" for c in judge_clients],
-        "reps": reps,
-        "n_tasks": len(tasks),
-        "n_treatments": len(trs),
-        "temperature": provider.temperature,
-        "seed": seed,
-        "date": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "treatments": [t.id for t in trs],
-        "tasks": [t.id for t in tasks],
-    }
     (run_dir / "config.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    cells = [(task, tr, rep) for task in tasks for tr in trs for rep in range(reps)]
-
-    records: list[dict] = []
+    all_cells = [(task, tr, rep) for task in tasks for tr in trs for rep in range(reps)]
+    cells = [c for c in all_cells if (c[0].id, c[1].id, c[2]) not in done]
+    records_jsonl = run_dir / "records.jsonl"
 
     def run_one(cell):
         task, tr, rep = cell
@@ -98,19 +135,29 @@ def run_experiment(
         sc = score(judge_clients, judge_cfg, task, res)
         return task, tr, rep, res, sc
 
-    print(f"Running {len(cells)} cells ({len(tasks)} tasks x {len(trs)} treatments x {reps} reps) "
-          f"on {provider_name}/{subject_client.model}, judges={jp_desc}")
+    def record(bundle):
+        rec = _process_cell(bundle, run_dir)
+        records.append(rec)
+        with open(records_jsonl, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        return rec
+
+    if not cells:
+        print("No new cells to run (all already present).")
+    else:
+        print(f"Running {len(cells)} cells ({len(tasks)} tasks x {len(trs)} treatments x {reps} reps) "
+              f"on {provider_name}/{subject_client.model}, judges={jp_desc}")
 
     if workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as ex:
             futures = {ex.submit(run_one, c): c for c in cells}
             for i, fut in enumerate(as_completed(futures), 1):
-                records.append(_process_cell(fut.result(), run_dir))
+                record(fut.result())
                 if i % 25 == 0:
                     print(f"  ...{i}/{len(cells)} done")
     else:
         for i, c in enumerate(cells, 1):
-            records.append(_process_cell(run_one(c), run_dir))
+            record(run_one(c))
             if i % 10 == 0 or i == len(cells):
                 print(f"  ...{i}/{len(cells)} done")
 
@@ -121,16 +168,12 @@ def run_experiment(
         encoding="utf-8",
     )
 
-    summary = summarize(df)
-    summary["treatment"].to_csv(run_dir / "summary_treatment.csv", index=False)
-    summary["cell"].to_csv(run_dir / "summary_cell.csv", index=False)
-    summary["delta"].to_csv(run_dir / "summary_delta.csv", index=False)
-
+    summary = _write_summary(df, run_dir)
     figures = build_all(df, summary["cell"], summary["delta"], run_dir / "figures")
     report_path = build_report(summary, meta, figures, run_dir / "report.md")
 
     print(f"\nDone. Results in: {run_dir}")
-    print(f"  report: {report_path.relative_to(run_dir.parent.parent) if run_dir.parent else report_path}")
+    print(f"  report: {report_path}")
     return run_dir
 
 
