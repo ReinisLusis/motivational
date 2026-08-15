@@ -27,7 +27,33 @@
 
 ---
 
-## Results
+## Update (N=8) — the "flow → performance" link softened
+
+After increasing to N=8 (352 cells), the persona-adoption finding is **unchanged and solid**, but the
+performance conclusion is more nuanced:
+
+| Treatment | SR (N=8) | Δ SR | p-value | Adoption |
+|---|---|---|---|---|
+| T0 control | 0.818 | — | — | 0.337 |
+| T4 one-line role | 0.852 | +3.4pp | 0.082 | 0.345 |
+| P2 named backstory | 0.852 | +3.4pp | 0.341 | 0.870 |
+| P3 emotional bond | 0.784 | −3.4pp | 0.192 | 0.376 |
+
+- **Flow detection holds.** P2 still adopts at 0.87; everyone else ~0.34. The threshold result is
+  robust to N.
+- **But deep flow does *not* beat a shallow role.** P2 and T4 now tie in success rate. The best
+  p-value belongs to **T4** (p = 0.082, d = 0.61) — the treatment with the *lowest* adoption. So
+  "flow" is real, but its *performance* value is not separable from "any persona."
+- **Emotion-without-identity still hurts.** P3 −3.4pp with the most tokens (2247) and most reasoning
+  (997).
+
+*Revised conclusion: persona weakly helps (~+3.4pp, marginal), but the specific depth of adoption
+("flow") does not appear to add performance beyond the mere presence of a persona. The N=5 result
+suggesting "flow → better performance" was a small-sample artifact — exactly why we re-ran at N=8.*
+
+---
+
+## Results (original N=5)
 
 | Treatment | SR | Adoption (flow) | Tokens | Reasoning tokens |
 |---|---|---|---|---|
