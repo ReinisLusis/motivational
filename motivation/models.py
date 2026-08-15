@@ -59,6 +59,8 @@ class ChatClient:
 
 
 class OpenAICompatClient(ChatClient):
+    _retries = 5
+
     def __init__(self, provider: Provider, model: str | None = None):
         super().__init__(provider, model)
         from openai import OpenAI
@@ -67,8 +69,20 @@ class OpenAICompatClient(ChatClient):
         self._client = OpenAI(api_key=key or "missing", base_url=provider.base_url)
 
     def complete(self, system, messages, tools=None):
-        from openai import OpenAI  # noqa: F401
+        from openai import AuthenticationError
 
+        last = None
+        for attempt in range(self._retries):
+            try:
+                return self._complete_once(system, messages, tools)
+            except AuthenticationError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - retry transient/rate-limit errors
+                last = exc
+                time.sleep(min(2 ** attempt, 20))
+        raise last
+
+    def _complete_once(self, system, messages, tools=None):
         full = [{"role": "system", "content": system}] + list(messages)
         kwargs: dict[str, Any] = dict(
             model=self.model,
