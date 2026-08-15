@@ -1,0 +1,5 @@
+task_id,category,difficulty,treatment_id,treatment_name,latency_s,tokens,prompt_tokens,completion_tokens,tool_calls,errors,cot_depth,success_rate,quality
+creative-slogan,creative,easy,T0,control,0.0025,15.0,10.0,5.0,0.0,0.0,0.0,1.0,0.5
+creative-slogan,creative,easy,T1,emotional-appeal,0.002,15.0,10.0,5.0,0.0,0.0,0.0,1.0,0.5
+tool-calc-chain,tool-use,hard,T0,control,0.002,15.0,10.0,5.0,0.0,0.0,0.0,0.0,0.0
+tool-calc-chain,tool-use,hard,T1,emotional-appeal,0.002,15.0,10.0,5.0,0.0,0.0,0.0,0.0,0.0

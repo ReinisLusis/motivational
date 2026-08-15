@@ -13,11 +13,11 @@ import pandas as pd
 from .analyze import make_df, summarize
 from .charts import build_all
 from .config import (
-    Provider,
     load_judge_config,
     load_providers,
     load_tasks,
     load_treatments,
+    resolve_judges,
 )
 from .models import make_client
 from .report import build_report
@@ -49,20 +49,16 @@ def run_experiment(
     workers: int = 1,
     out: Path | None = None,
     seed: int = 42,
-    judge_provider: str | None = None,
-    judge_model: str | None = None,
+    judges: list[str] | None = None,
 ) -> Path:
     providers = load_providers()
     provider = providers[provider_name]
     if temperature is not None:
         provider.temperature = temperature
 
-    jp_name = judge_provider or providers["_judge"].name
-    judge_prov = providers[jp_name]
-    judge_model_id = judge_model or (
-        providers["_judge"].default_model if judge_provider is None else judge_prov.default_model
-    )
-    judge_client = make_client(judge_prov, judge_model_id)
+    judge_provs = resolve_judges(judges)
+    judge_clients = [make_client(jp) for jp in judge_provs]
+    jp_desc = ", ".join(f"{c.provider.name}/{c.model}" for c in judge_clients)
 
     subject_client = make_client(provider, model)
 
@@ -80,8 +76,7 @@ def run_experiment(
     meta = {
         "provider": provider_name,
         "model": subject_client.model,
-        "judge_provider": jp_name,
-        "judge_model": judge_model_id,
+        "judges": [f"{c.provider.name}/{c.model}" for c in judge_clients],
         "reps": reps,
         "n_tasks": len(tasks),
         "n_treatments": len(trs),
@@ -100,11 +95,11 @@ def run_experiment(
     def run_one(cell):
         task, tr, rep = cell
         res = run_cell(subject_client, task, tr, run_index=rep)
-        sc = score(judge_client, judge_cfg, task, res)
+        sc = score(judge_clients, judge_cfg, task, res)
         return task, tr, rep, res, sc
 
     print(f"Running {len(cells)} cells ({len(tasks)} tasks x {len(trs)} treatments x {reps} reps) "
-          f"on {provider_name}/{subject_client.model}, judge={jp_name}/{judge_model_id}")
+          f"on {provider_name}/{subject_client.model}, judges={jp_desc}")
 
     if workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as ex:

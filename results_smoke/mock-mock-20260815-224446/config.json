@@ -1,0 +1,21 @@
+{
+  "provider": "mock",
+  "model": "mock",
+  "judges": [
+    "mock/mock"
+  ],
+  "reps": 2,
+  "n_tasks": 2,
+  "n_treatments": 2,
+  "temperature": 0.7,
+  "seed": 42,
+  "date": "2026-08-15 22:44:46",
+  "treatments": [
+    "T0",
+    "T1"
+  ],
+  "tasks": [
+    "tool-calc-chain",
+    "creative-slogan"
+  ]
+}

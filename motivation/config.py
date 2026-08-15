@@ -65,23 +65,74 @@ def load_providers() -> dict[str, Provider]:
             temperature=float(p.get("temperature", 0.7)),
             max_tokens=int(p.get("max_tokens", 2048)),
         )
-    providers["_judge"] = _judge_provider(providers, raw)
     return providers
 
 
-def _judge_provider(providers: dict[str, Provider], raw: dict) -> Provider:
-    name = raw.get("judge_provider", "deepseek")
-    model = raw.get("judge_model")
-    base = providers[name]
-    return Provider(
-        name=name,
-        type=base.type,
-        base_url=base.base_url,
-        api_key_env=base.api_key_env,
-        default_model=model or base.default_model,
-        temperature=0.0,
-        max_tokens=512,
-    )
+def _resolve_judge_providers(raw: dict, providers: dict[str, Provider]) -> list[Provider]:
+    """Build the judge matrix (list of judge providers with resolved models)."""
+    resolved: list[Provider] = []
+    judges = raw.get("judges")
+    if judges:
+        for j in judges:
+            pname = j["provider"]
+            base = providers[pname]
+            resolved.append(
+                Provider(
+                    name=pname,
+                    type=base.type,
+                    base_url=base.base_url,
+                    api_key_env=base.api_key_env,
+                    default_model=j.get("model") or base.default_model,
+                    temperature=0.0,
+                    max_tokens=512,
+                )
+            )
+    else:
+        pname = raw.get("judge_provider", "deepseek")
+        base = providers[pname]
+        model = raw.get("judge_model") or base.default_model
+        resolved.append(
+            Provider(
+                name=pname,
+                type=base.type,
+                base_url=base.base_url,
+                api_key_env=base.api_key_env,
+                default_model=model,
+                temperature=0.0,
+                max_tokens=512,
+            )
+        )
+    return resolved
+
+
+def load_judges() -> list[Provider]:
+    raw = _load(CONFIG_DIR / "models.yaml")
+    return _resolve_judge_providers(raw, load_providers())
+
+
+def resolve_judges(specs: list[str] | None) -> list[Provider]:
+    """Resolve CLI judge specs of the form 'provider' or 'provider:model'."""
+    providers = load_providers()
+    if not specs:
+        return load_judges()
+    out: list[Provider] = []
+    for spec in specs:
+        parts = spec.split(":", 1)
+        pname = parts[0].strip()
+        model = parts[1].strip() if len(parts) == 2 else None
+        base = providers[pname]
+        out.append(
+            Provider(
+                name=pname,
+                type=base.type,
+                base_url=base.base_url,
+                api_key_env=base.api_key_env,
+                default_model=model or base.default_model,
+                temperature=0.0,
+                max_tokens=512,
+            )
+        )
+    return out
 
 
 def load_treatments() -> list[Treatment]:

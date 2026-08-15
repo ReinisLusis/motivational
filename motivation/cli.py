@@ -21,8 +21,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--temperature", type=float, default=None)
     p.add_argument("--workers", type=int, default=1)
     p.add_argument("--out", default="results", help="Output directory")
-    p.add_argument("--judge-provider", default=None)
-    p.add_argument("--judge-model", default=None)
+    p.add_argument(
+        "--judges",
+        default=None,
+        help="Comma-separated judge specs 'provider[:model]' (e.g. 'deepseek:deepseek-chat,ollama:llama3.2'). Default: config/models.yaml judges.",
+    )
     p.add_argument("--seed", type=int, default=42)
 
     args = p.parse_args(argv)
@@ -40,8 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         workers=args.workers,
         out=Path(args.out),
         seed=args.seed,
-        judge_provider=args.judge_provider,
-        judge_model=args.judge_model,
+        judges=_split(args.judges),
     )
     return 0
 

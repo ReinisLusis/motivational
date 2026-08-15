@@ -1,0 +1,42 @@
+{
+  "task_id": "creative-slogan",
+  "treatment_id": "T0",
+  "treatment_text": "",
+  "run_index": 0,
+  "model": "mock",
+  "result": {
+    "task_id": "creative-slogan",
+    "treatment_id": "T0",
+    "model": "mock",
+    "run_index": 0,
+    "final_text": "This is a deterministic mock response.",
+    "transcript": [
+      {
+        "role": "assistant",
+        "content": "This is a deterministic mock response."
+      }
+    ],
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 10,
+      "completion_tokens": 5
+    },
+    "wall_time": 0.0023360252380371094,
+    "errors": 0,
+    "cot_depth": 0,
+    "error_msg": ""
+  },
+  "score": {
+    "score": 0.5,
+    "passed": true,
+    "reason": "mock/mock:pass",
+    "method": "judge",
+    "judge_details": {
+      "mock/mock": {
+        "score": 0.5,
+        "pass": true,
+        "reason": "mock judge"
+      }
+    }
+  }
+}

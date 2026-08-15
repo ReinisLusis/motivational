@@ -55,8 +55,9 @@ Full hypotheses (H1–H8) with falsifiable thresholds: [`hypotheses.md`](hypothe
 | **CoT depth (CD)** | heuristic count of reasoning steps |
 
 **Scoring** is triple-tracked: `exact` (string/number match), `code` (hidden tests run in a sandboxed
-subprocess — including an O(n²)-vs-O(n) timeout trap), and `judge` (a held-out model scoring blindly,
-with no knowledge of the treatment).
+subprocess — including an O(n²)-vs-O(n) timeout trap), and `judge` — a **matrix** of held-out models
+scoring each response blindly (no knowledge of the treatment). Judge scores are aggregated as mean
+quality + strict majority vote for pass, so no single judge's bias dominates.
 
 **Statistics**: each (task × treatment) cell is replicated N≥5 times at temperature > 0; deltas are
 measured against T0 with a paired t-test and Cohen's *d*.
@@ -83,12 +84,13 @@ py -m motivation.cli --provider anthropic --reps 5
 ```
 
 Add providers in [`config/models.yaml`](config/models.yaml) — anything OpenAI-compatible works
-(Ollama, LM Studio, vLLM, …).
+(Ollama, LM Studio, vLLM, …), plus free hosted tiers: **Groq**, **Cerebras**, **Mistral**,
+**OpenRouter** (open models via their `:free` routes).
 
 Offline smoke test (no API key, deterministic):
 
 ```powershell
-py -m motivation.cli --provider mock --judge-provider mock --reps 3
+py -m motivation.cli --provider mock --judges mock --reps 3
 ```
 
 Each run writes a self-contained folder under `results/`:

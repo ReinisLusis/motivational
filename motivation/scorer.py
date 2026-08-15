@@ -22,6 +22,7 @@ class Score:
     passed: bool          # success (SR)
     reason: str
     method: str
+    judge_details: dict | None = None  # per-judge breakdown for judge matrix
 
 
 # --- exact ----------------------------------------------------------------
@@ -123,7 +124,7 @@ def _code(task: Task, text: str) -> Score:
 
 # --- judge ----------------------------------------------------------------
 
-def _judge(client: ChatClient, cfg: dict, task: Task, text: str) -> Score:
+def _judge_one(client: ChatClient, cfg: dict, task: Task, text: str) -> Score:
     if client.is_mock():
         return Score(0.5, True, "mock judge", "judge")
 
@@ -149,10 +150,31 @@ def _judge(client: ChatClient, cfg: dict, task: Task, text: str) -> Score:
     return Score(score, passed, str(obj.get("reason", ""))[:200], "judge")
 
 
-def score(client: ChatClient, judge_cfg: dict, task: Task, result: RunResult) -> Score:
+def _judge(clients: list[ChatClient], cfg: dict, task: Task, text: str) -> Score:
+    if not clients:
+        return Score(0.0, False, "no judges configured", "judge")
+
+    details: dict = {}
+    votes = 0
+    total_score = 0.0
+    for c in clients:
+        s = _judge_one(c, cfg, task, text)
+        key = f"{c.provider.name}/{c.model}"
+        details[key] = {"score": s.score, "pass": s.passed, "reason": s.reason}
+        total_score += s.score
+        votes += 1 if s.passed else 0
+
+    n = len(clients)
+    passed = votes >= (n + 1) // 2  # strict majority (ties fall to fail)
+    agg = total_score / n
+    reason = "; ".join(f"{k}:{'pass' if v['pass'] else 'fail'}" for k, v in details.items())
+    return Score(agg, passed, reason, "judge", judge_details=details)
+
+
+def score(judge_clients: list[ChatClient], judge_cfg: dict, task: Task, result: RunResult) -> Score:
     text = result.final_text
     if task.scorer == "exact":
         return _exact(str(task.ground_truth), text)
     if task.scorer == "code":
         return _code(task, text)
-    return _judge(client, judge_cfg, task, text)
+    return _judge(judge_clients, judge_cfg, task, text)

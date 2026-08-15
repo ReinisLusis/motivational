@@ -4,8 +4,18 @@
 #   base_url:    endpoint for openai_compat providers (DeepSeek, OpenAI, Ollama, LM Studio, vLLM...)
 #   api_key_env: name of the env var holding the key
 #
-judge_provider: deepseek
-judge_model: null          # null -> use provider default_model
+# Judge matrix: every candidate response is scored by ALL judges, then aggregated
+# (mean quality score + majority vote for pass). More judges = less single-judge bias.
+# Each entry: provider (key below) + optional model override (null -> provider default).
+judges:
+  - provider: deepseek
+    model: deepseek-chat
+  # - provider: groq
+  #   model: llama-3.3-70b-versatile
+  # - provider: cerebras
+  #   model: llama-3.3-70b
+  # - provider: openrouter
+  #   model: meta-llama/llama-3.3-70b-instruct:free
 
 providers:
   deepseek:
@@ -21,6 +31,39 @@ providers:
     base_url: "https://api.openai.com/v1"
     api_key_env: OPENAI_API_KEY
     default_model: "gpt-4o-mini"
+    temperature: 0.7
+    max_tokens: 2048
+
+  # --- free, public hosted tiers (open models) ---------------------------
+  groq:
+    type: openai_compat
+    base_url: "https://api.groq.com/openai/v1"
+    api_key_env: GROQ_API_KEY
+    default_model: "llama-3.3-70b-versatile"
+    temperature: 0.7
+    max_tokens: 2048
+
+  cerebras:
+    type: openai_compat
+    base_url: "https://api.cerebras.ai/v1"
+    api_key_env: CEREBRAS_API_KEY
+    default_model: "llama-3.3-70b"
+    temperature: 0.7
+    max_tokens: 2048
+
+  mistral:
+    type: openai_compat
+    base_url: "https://api.mistral.ai/v1"
+    api_key_env: MISTRAL_API_KEY
+    default_model: "open-mistral-nemo"
+    temperature: 0.7
+    max_tokens: 2048
+
+  openrouter:
+    type: openai_compat
+    base_url: "https://openrouter.ai/api/v1"
+    api_key_env: OPENROUTER_API_KEY
+    default_model: "meta-llama/llama-3.3-70b-instruct:free"
     temperature: 0.7
     max_tokens: 2048
 
