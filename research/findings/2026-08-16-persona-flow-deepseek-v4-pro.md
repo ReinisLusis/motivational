@@ -53,6 +53,25 @@ suggesting "flow → better performance" was a small-sample artifact — exactly
 
 ---
 
+## Update 2 (P4: identity + emotion combined)
+
+Adding **P4** (named Dr. Elena + backstory + emotional bond) at N=8:
+
+| Treatment | SR | Δ SR | Adoption |
+|---|---|---|---|
+| T4 one-line role | 0.852 | +3.4pp | 0.345 |
+| P2 named backstory | 0.852 | +3.4pp | 0.870 |
+| P4 identity + emotion | 0.841 | +2.3pp | **0.946** |
+| P3 emotion only | 0.784 | −3.4pp | 0.376 |
+
+- **Emotion on top of identity deepens flow** (P4 adoption 0.946 > P2's 0.870 — the deepest yet),
+  but **does not improve performance** (P4 0.841 < P2 0.852). Emotion adds depth, not accuracy.
+- **The ladder is now complete and consistent:** flow is measurable and deepenable (identity is
+  required, emotion amplifies it), but performance gains are flat across all concrete personas
+  (~+2–3pp) and *negative* for emotion-without-identity.
+
+---
+
 ## Results (original N=5)
 
 | Treatment | SR | Adoption (flow) | Tokens | Reasoning tokens |
