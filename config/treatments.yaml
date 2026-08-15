@@ -68,6 +68,12 @@ treatments:
     name: word-cap
     text: "Answer in 20 words or fewer."
 
+  - id: E7
+    name: token-budget-adaptive
+    text: >-
+      You are billed per token. Minimize token usage while remaining correct. Think only as much as
+      is strictly necessary, and skip reasoning when the answer is obvious.
+
   # --- persona-depth ladder (P-series; T4 = one-line role, P2/P3 go deeper) ---
   - id: P2
     name: persona-backstory
