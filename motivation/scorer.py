@@ -165,9 +165,11 @@ def _judge(clients: list[ChatClient], cfg: dict, task: Task, text: str) -> Score
         votes += 1 if s.passed else 0
 
     n = len(clients)
-    passed = votes >= (n + 1) // 2  # strict majority (ties fall to fail)
+    passed = votes > n / 2  # strict majority (even-count ties fall to fail)
     agg = total_score / n
-    reason = "; ".join(f"{k}:{'pass' if v['pass'] else 'fail'}" for k, v in details.items())
+    reason = f"{votes}/{n} votes; " + "; ".join(
+        f"{k}:{'pass' if v['pass'] else 'fail'}" for k, v in details.items()
+    )
     return Score(agg, passed, reason, "judge", judge_details=details)
 
 

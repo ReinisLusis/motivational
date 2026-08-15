@@ -23,6 +23,7 @@ class RunResult:
     model: str
     run_index: int
     final_text: str = ""
+    reasoning_content: str = ""
     transcript: list[dict] = field(default_factory=list)
     tool_calls: list[dict] = field(default_factory=list)
     usage: Usage = field(default_factory=Usage)
@@ -94,6 +95,7 @@ def run_cell(
             comp = client.complete(system, messages, tools)
             result.usage.prompt_tokens += comp.usage.prompt_tokens
             result.usage.completion_tokens += comp.usage.completion_tokens
+            result.reasoning_content += comp.reasoning_content
 
             if comp.tool_calls:
                 assistant_msg = {
@@ -110,7 +112,12 @@ def run_cell(
                 }
                 messages.append(assistant_msg)
                 result.transcript.append(
-                    {"role": "assistant", "text": comp.text, "tool_calls": [asdict(tc) for tc in comp.tool_calls]}
+                    {
+                        "role": "assistant",
+                        "text": comp.text,
+                        "reasoning_content": comp.reasoning_content,
+                        "tool_calls": [asdict(tc) for tc in comp.tool_calls],
+                    }
                 )
                 for tc in comp.tool_calls:
                     try:
@@ -127,7 +134,13 @@ def run_cell(
                     messages.append({"role": "tool", "tool_call_id": tc.id, "content": out})
             else:
                 result.final_text = comp.text or ""
-                result.transcript.append({"role": "assistant", "content": result.final_text})
+                result.transcript.append(
+                    {
+                        "role": "assistant",
+                        "content": result.final_text,
+                        "reasoning_content": comp.reasoning_content,
+                    }
+                )
                 break
         else:
             result.final_text = result.final_text or "(no final answer produced within step limit)"
@@ -138,5 +151,5 @@ def run_cell(
             result.final_text = "(error)"
 
     result.wall_time = time.time() - start
-    result.cot_depth = _count_steps(result.final_text)
+    result.cot_depth = _count_steps(result.reasoning_content) if result.reasoning_content else _count_steps(result.final_text)
     return result

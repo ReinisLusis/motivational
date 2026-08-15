@@ -31,6 +31,7 @@ class Usage:
 @dataclass
 class Completion:
     text: str = ""
+    reasoning_content: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
     usage: Usage = field(default_factory=Usage)
     finish_reason: str = ""
@@ -100,9 +101,10 @@ class OpenAICompatClient(ChatClient):
 
         return Completion(
             text=msg.content or "",
+            reasoning_content=getattr(msg, "reasoning_content", "") or "",
             tool_calls=tool_calls,
             usage=usage,
-            finish_reason=msg.finish_reason or "",
+            finish_reason=resp.choices[0].finish_reason or "",
             raw=resp,
         )
 

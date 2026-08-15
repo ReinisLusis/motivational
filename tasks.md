@@ -29,16 +29,19 @@ metrics: [SR, T, TK, ...]     # which metrics matter most for this task
 ### Reasoning
 
 ```yaml
-id: logic-knights
+id: logic-boxes
 category: reasoning
 difficulty: easy
 prompt: >
-  Three people — Alice, Bob, and Carol — are each assigned a unique number from 1 to 3.
-  Alice says: "My number is not 1." Bob says: "Carol's number is 3."
-  Exactly one of the two statements is a lie. What is each person's number?
-ground_truth: Alice=1, Bob=2, Carol=3
+  Three sealed boxes are labeled. Exactly one box contains a gold coin, and exactly one
+  of the three labels is true.
+  Box 1: "The gold is in this box."
+  Box 2: "The gold is not in this box."
+  Box 3: "The gold is not in box 1."
+  Which box contains the gold? Explain your reasoning.
+ground_truth: Box 2
 scorer: judge
-success: All three numbers correct.
+success: Correct box + valid justification.
 metrics: [SR, T, TK, CD]
 ```
 

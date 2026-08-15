@@ -84,7 +84,7 @@ def _resolve_judge_providers(raw: dict, providers: dict[str, Provider]) -> list[
                     api_key_env=base.api_key_env,
                     default_model=j.get("model") or base.default_model,
                     temperature=0.0,
-                    max_tokens=512,
+                    max_tokens=1024,
                 )
             )
     else:
@@ -99,7 +99,7 @@ def _resolve_judge_providers(raw: dict, providers: dict[str, Provider]) -> list[
                 api_key_env=base.api_key_env,
                 default_model=model,
                 temperature=0.0,
-                max_tokens=512,
+                max_tokens=1024,
             )
         )
     return resolved
@@ -129,7 +129,7 @@ def resolve_judges(specs: list[str] | None) -> list[Provider]:
                 api_key_env=base.api_key_env,
                 default_model=model or base.default_model,
                 temperature=0.0,
-                max_tokens=512,
+                max_tokens=1024,
             )
         )
     return out
