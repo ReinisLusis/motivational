@@ -9,7 +9,7 @@
 # Each entry: provider (key below) + optional model override (null -> provider default).
 judges:
   - provider: deepseek
-    model: deepseek-chat
+    model: deepseek-v4-pro
   # - provider: groq
   #   model: llama-3.3-70b-versatile
   # - provider: cerebras
@@ -22,7 +22,7 @@ providers:
     type: openai_compat
     base_url: "https://api.deepseek.com"
     api_key_env: DEEPSEEK_API_KEY
-    default_model: "deepseek-chat"
+    default_model: "deepseek-v4-pro"
     temperature: 0.7
     max_tokens: 2048
 
