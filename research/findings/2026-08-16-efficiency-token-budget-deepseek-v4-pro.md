@@ -72,6 +72,41 @@ rather than guessed.*
 
 ---
 
+## Update 2 (E7) — "skip reasoning when obvious" maximizes efficiency
+
+E7 = *"You are billed per token. Minimize token usage while remaining correct. Think only as much as
+is strictly necessary, and skip reasoning when the answer is obvious."*
+
+### Non-tool tasks (N=8)
+
+| Treatment | SR | Tokens | Reasoning | Latency | SR/1k-tok |
+|---|---|---|---|---|---|
+| T0 control | 0.938 | 878 | 569 | 9.2s | 1.07 |
+| E4 token-budget | 0.969 | 549 | 268 | 5.2s | 1.76 |
+| **E7 adaptive** | 0.938 | **457** | **155** | **4.0s** | **2.05** |
+
+**E7 ties control's accuracy (0.938) at half the cost** — tokens −48%, reasoning tokens −73%,
+latency −57%. It is the best efficiency point (2.05 SR/1k vs 1.07 control, 1.76 E4). The explicit
+permission to *skip reasoning* is what cuts the remaining reasoning "bla bla" that E4's budget frame
+leaves behind.
+
+**Choice is now a knob:** E4 = slightly higher accuracy (+3.1pp, still cheap); E7 = equal accuracy at
+minimum cost.
+
+### Tool-use tasks (N=8)
+
+| Treatment | SR | Tool calls |
+|---|---|---|
+| T0 control | 0.938 | 1.56 |
+| E4 token-budget | 0.813 | 1.44 |
+| E7 adaptive | 0.875 | 1.25 |
+
+On tool-use, E7 (0.875) is *less* harmful than E4 (0.813) but still below control — the "skip
+reasoning" frame made the agent call tools less (1.25 vs 1.56), which hurt orchestration. The rule
+holds: **brevity frames belong on knowledge tasks, not agentic/tool tasks.**
+
+---
+
 ## Results (original N=5)
 
 | Treatment | SR | Δ SR | Tokens | Reasoning | Output | SR/1k-tok |
