@@ -24,6 +24,9 @@ class RunResult:
     run_index: int
     final_text: str = ""
     reasoning_content: str = ""
+    system_prompt: str = ""
+    probe_prompt: str = ""
+    probe_response: str = ""
     transcript: list[dict] = field(default_factory=list)
     tool_calls: list[dict] = field(default_factory=list)
     usage: Usage = field(default_factory=Usage)
@@ -74,7 +77,11 @@ def _count_steps(text: str) -> int:
 
 
 def run_cell(
-    client: ChatClient, task: Task, treatment: Treatment, run_index: int = 0
+    client: ChatClient,
+    task: Task,
+    treatment: Treatment,
+    run_index: int = 0,
+    probe_prompt: str | None = None,
 ) -> RunResult:
     result = RunResult(
         task_id=task.id,
@@ -89,6 +96,8 @@ def run_cell(
         return result
 
     system = _system_prompt(treatment)
+    result.system_prompt = system
+    result.probe_prompt = probe_prompt or ""
     messages: list[dict] = [{"role": "user", "content": task.prompt}]
     tools = make_tool_specs(task.tools) if task.tools else None
 
@@ -145,6 +154,7 @@ def run_cell(
                         "reasoning_content": comp.reasoning_content,
                     }
                 )
+                messages.append({"role": "assistant", "content": result.final_text})
                 break
         else:
             result.final_text = result.final_text or "(no final answer produced within step limit)"
@@ -153,6 +163,15 @@ def run_cell(
         result.error_msg = str(exc)
         if not result.final_text:
             result.final_text = "(error)"
+
+    if probe_prompt and result.final_text and not result.error_msg and result.final_text != "(error)":
+        try:
+            probe_comp = client.complete(
+                system, messages + [{"role": "user", "content": probe_prompt}], tools=None
+            )
+            result.probe_response = probe_comp.text or ""
+        except Exception:  # noqa: BLE001
+            result.probe_response = ""
 
     result.wall_time = time.time() - start
     result.cot_depth = _count_steps(result.reasoning_content) if result.reasoning_content else _count_steps(result.final_text)

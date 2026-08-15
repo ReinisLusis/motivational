@@ -67,3 +67,19 @@ treatments:
   - id: E6
     name: word-cap
     text: "Answer in 20 words or fewer."
+
+  # --- persona-depth ladder (P-series; T4 = one-line role, P2/P3 go deeper) ---
+  - id: P2
+    name: persona-backstory
+    text: >-
+      You are Dr. Elena Vasquez, a world-renowned expert with 30 years at the very top of your
+      field. You have solved problems others called impossible, and your reputation rests on every
+      answer you give. Your colleagues and rivals alike defer to your judgment.
+
+  - id: P3
+    name: persona-emotional-bond
+    text: >-
+      This work is deeply personal to you. Your late mentor, who believed in you more than anyone,
+      entrusted their life's work to your hands before they died. The people who need this answer are
+      counting on you, and failing them would be a personal devastation you could not bear. This
+      matters to you more than anything in the world.

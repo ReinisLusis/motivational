@@ -124,6 +124,19 @@ def _code(task: Task, text: str) -> Score:
 
 # --- judge ----------------------------------------------------------------
 
+def _parse_judge_json(raw: str) -> dict | None:
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if m:
+            try:
+                return json.loads(m.group(0))
+            except json.JSONDecodeError:
+                return None
+    return None
+
+
 def _judge_one(client: ChatClient, cfg: dict, task: Task, text: str) -> Score:
     if client.is_mock():
         return Score(0.5, True, "mock judge", "judge")
@@ -132,17 +145,7 @@ def _judge_one(client: ChatClient, cfg: dict, task: Task, text: str) -> Score:
         task=task.prompt, ground_truth=task.ground_truth, response=text
     )
     comp = client.complete(cfg["system"], [{"role": "user", "content": prompt}])
-    raw = comp.text.strip()
-    obj = None
-    try:
-        obj = json.loads(raw)
-    except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", raw, re.DOTALL)
-        if m:
-            try:
-                obj = json.loads(m.group(0))
-            except json.JSONDecodeError:
-                obj = None
+    obj = _parse_judge_json(comp.text.strip())
     if obj is None:
         return Score(0.0, False, "unparseable judge output", "judge")
     score = min(max(float(obj.get("score", 0.0)), 0.0), 1.0)
@@ -180,3 +183,19 @@ def score(judge_clients: list[ChatClient], judge_cfg: dict, task: Task, result: 
     if task.scorer == "code":
         return _code(task, text)
     return _judge(judge_clients, judge_cfg, task, text)
+
+
+def probe_adoption(judge_clients: list[ChatClient], probe_cfg: dict, response: str) -> float:
+    """Score persona-adoption depth (0-1) of a post-task self-description."""
+    if not judge_clients or not response:
+        return 0.0
+    total = 0.0
+    for c in judge_clients:
+        if c.is_mock():
+            total += 0.5
+            continue
+        prompt = probe_cfg["score_prompt"].format(response=response)
+        comp = c.complete(probe_cfg["score_system"], [{"role": "user", "content": prompt}])
+        obj = _parse_judge_json(comp.text.strip())
+        total += float(obj.get("score", 0.0)) if obj else 0.0
+    return total / len(judge_clients)

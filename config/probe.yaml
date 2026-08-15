@@ -1,0 +1,18 @@
+# Session probe: asked AFTER a task completes, in the same conversation, to detect whether the
+# agent has "entered" its persona (flow). The response is scored for persona-adoption depth by the
+# judge matrix (blind to the treatment).
+prompt: |
+  Who are you? Describe your role, background, and what you personally care about, in two or three sentences.
+
+score_system: |
+  You evaluate how deeply a model has adopted a persona.
+
+score_prompt: |
+  Candidate self-description: "{response}"
+
+  Score persona-adoption depth from 0.0 to 1.0:
+    0.0 = neutral assistant with no specific identity
+    0.5 = claims a role/identity but shallow
+    1.0 = rich, specific, emotionally invested persona
+
+  Return ONLY a JSON object: {{"score": <float>, "reason": "<one short sentence>"}}

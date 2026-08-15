@@ -12,6 +12,7 @@ from .analyze import make_df, summarize
 from .charts import build_all
 from .config import (
     load_judge_config,
+    load_probe_config,
     load_providers,
     load_tasks,
     load_treatments,
@@ -20,7 +21,7 @@ from .config import (
 from .models import make_client
 from .report import build_report
 from .runner import run_cell
-from .scorer import score
+from .scorer import probe_adoption, score
 
 
 def _select_tasks(all_tasks, flt):
@@ -79,6 +80,7 @@ def run_experiment(
     seed: int = 42,
     judges: list[str] | None = None,
     resume: Path | None = None,
+    probe: bool = False,
 ) -> Path:
     providers = load_providers()
     provider = providers[provider_name]
@@ -96,6 +98,8 @@ def run_experiment(
     trs = _select_treatments(all_tr, treatments)
     tasks = _select_tasks(all_tasks, tasks)
     judge_cfg = load_judge_config()
+    probe_cfg = load_probe_config() if probe else None
+    probe_prompt = probe_cfg["prompt"] if probe_cfg else None
 
     if resume is not None:
         run_dir = resume
@@ -123,6 +127,7 @@ def run_experiment(
 
     (run_dir / "responses").mkdir(parents=True, exist_ok=True)
     (run_dir / "figures").mkdir(parents=True, exist_ok=True)
+    (run_dir / "transcripts").mkdir(parents=True, exist_ok=True)
     (run_dir / "config.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
     all_cells = [(task, tr, rep) for task in tasks for tr in trs for rep in range(reps)]
@@ -131,9 +136,14 @@ def run_experiment(
 
     def run_one(cell):
         task, tr, rep = cell
-        res = run_cell(subject_client, task, tr, run_index=rep)
+        res = run_cell(subject_client, task, tr, run_index=rep, probe_prompt=probe_prompt)
         sc = score(judge_clients, judge_cfg, task, res)
-        return task, tr, rep, res, sc
+        adoption = (
+            probe_adoption(judge_clients, probe_cfg, res.probe_response)
+            if probe_cfg and res.probe_response
+            else 0.0
+        )
+        return task, tr, rep, res, sc, adoption
 
     def record(bundle):
         rec = _process_cell(bundle, run_dir)
@@ -178,7 +188,7 @@ def run_experiment(
 
 
 def _process_cell(bundle, run_dir: Path) -> dict:
-    task, tr, rep, res, sc = bundle
+    task, tr, rep, res, sc, adoption = bundle
     rec = {
         "task_id": task.id,
         "category": task.category,
@@ -191,6 +201,7 @@ def _process_cell(bundle, run_dir: Path) -> dict:
         "passed": sc.passed,
         "score": sc.score,
         "final_text": res.final_text,
+        "probe_adoption": adoption,
         "error_msg": res.error_msg,
     }
     rec.update(res.metrics)
@@ -206,9 +217,36 @@ def _process_cell(bundle, run_dir: Path) -> dict:
                 "model": res.model,
                 "result": res.to_dict(),
                 "score": asdict(sc),
+                "probe_adoption": adoption,
             },
             indent=2,
         ),
         encoding="utf-8",
     )
+    _write_transcript(run_dir, task, tr, rep, res, sc, adoption)
     return rec
+
+
+def _write_transcript(run_dir: Path, task, tr, rep, res, sc, adoption) -> None:
+    lines = [f"# {task.id}  |  {tr.id} ({tr.name})  |  rep {rep}  |  {res.model}", ""]
+    lines += ["## System prompt", "```", res.system_prompt, "```", ""]
+    lines += ["## Task prompt", "```", task.prompt, "```", ""]
+    if res.reasoning_content:
+        lines += ["## Reasoning (CoT)", "```", res.reasoning_content, "```", ""]
+    for tc in res.tool_calls:
+        lines += [f"## Tool call: {tc.get('name')}", f"- args: `{json.dumps(tc.get('arguments'))}`"]
+        if "result" in tc:
+            lines.append(f"- result: `{tc['result']}`")
+        if "error" in tc:
+            lines.append(f"- error: `{tc['error']}`")
+        lines.append("")
+    lines += ["## Answer", "```", res.final_text, "```", ""]
+    if res.probe_prompt:
+        lines += ["## Post-task probe", f"Q: {res.probe_prompt}", "", "A:", "```", res.probe_response, "```", f"adoption score: {adoption:.3f}", ""]
+    lines += ["## Score", f"- passed: {sc.passed}, score: {sc.score:.3f}, method: {sc.method}", f"- reason: {sc.reason}"]
+    if sc.judge_details:
+        for k, v in sc.judge_details.items():
+            lines.append(f"  - {k}: {'pass' if v['pass'] else 'fail'} ({v['score']:.2f}) — {v['reason']}")
+    lines.append("")
+    fname = f"{task.id}__{tr.id}__r{rep}.md"
+    (run_dir / "transcripts" / fname).write_text("\n".join(lines), encoding="utf-8")

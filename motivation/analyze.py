@@ -16,6 +16,7 @@ METRIC_COLS = [
     "tool_calls",
     "errors",
     "cot_depth",
+    "probe_adoption",
 ]
 
 
@@ -39,17 +40,19 @@ def per_cell_summary(df: pd.DataFrame) -> pd.DataFrame:
 
 def per_treatment_summary(cell: pd.DataFrame) -> pd.DataFrame:
     """Equal weight per task (robust to differing task counts)."""
-    g = cell.groupby(["treatment_id", "treatment_name"]).agg(
-        success_rate=("success_rate", "mean"),
-        quality=("quality", "mean"),
-        latency_s=("latency_s", "mean"),
-        tokens=("tokens", "mean"),
-        reasoning_tokens=("reasoning_tokens", "mean"),
-        output_tokens=("output_tokens", "mean"),
-        tool_calls=("tool_calls", "mean"),
-        errors=("errors", "mean"),
-        cot_depth=("cot_depth", "mean"),
-    ).reset_index()
+    agg: dict[str, tuple[str, str]] = {
+        "success_rate": ("success_rate", "mean"),
+        "quality": ("quality", "mean"),
+        "latency_s": ("latency_s", "mean"),
+        "tokens": ("tokens", "mean"),
+        "tool_calls": ("tool_calls", "mean"),
+        "errors": ("errors", "mean"),
+        "cot_depth": ("cot_depth", "mean"),
+    }
+    for c in ("reasoning_tokens", "output_tokens", "probe_adoption"):
+        if c in cell.columns:
+            agg[c] = (c, "mean")
+    g = cell.groupby(["treatment_id", "treatment_name"]).agg(**agg).reset_index()
     g["sr_per_1k_tokens"] = (g["success_rate"] / g["tokens"] * 1000).round(3)
     return g.round(4)
 

@@ -148,6 +148,15 @@ def load_judge_config() -> dict[str, str]:
     return {"system": raw["system"], "prompt": raw["prompt"]}
 
 
+def load_probe_config() -> dict[str, str]:
+    raw = _load(CONFIG_DIR / "probe.yaml")
+    return {
+        "prompt": raw["prompt"],
+        "score_system": raw["score_system"],
+        "score_prompt": raw["score_prompt"],
+    }
+
+
 def load_tasks() -> list[Task]:
     raw = _load(TASKS_DIR / "tasks.yaml")
     tasks = []

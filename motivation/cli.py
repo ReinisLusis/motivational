@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--resume", default=None, help="Resume an existing run dir (skips completed cells)")
     p.add_argument("--report-dir", default=None, help="Regenerate report/charts from an existing run dir (no API calls)")
+    p.add_argument("--probe", action="store_true", help="Ask a post-task identity probe and score persona adoption")
 
     args = p.parse_args(argv)
 
@@ -51,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         judges=_split(args.judges),
         resume=Path(args.resume) if args.resume else None,
+        probe=args.probe,
     )
     return 0
 

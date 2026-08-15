@@ -130,7 +130,7 @@ def build_report(summary: dict, meta: dict, figures: list[Path], out_path: Path)
     lines.append("## Overall results")
     lines.append("")
     cols = ["treatment_id", "treatment_name", "success_rate", "quality", "latency_s", "tokens"]
-    for c in ["reasoning_tokens", "output_tokens", "sr_per_1k_tokens", "errors"]:
+    for c in ["reasoning_tokens", "output_tokens", "probe_adoption", "sr_per_1k_tokens", "errors"]:
         if c in tr.columns:
             cols.append(c)
     lines.append(_md_table(tr, cols))
@@ -154,7 +154,8 @@ def build_report(summary: dict, meta: dict, figures: list[Path], out_path: Path)
             lines.append("")
     lines.append("## Data")
     lines.append("")
-    lines.append("- Raw agent transcripts: `responses/*.json`")
+    lines.append("- Raw agent transcripts (JSON): `responses/*.json`")
+    lines.append("- Human-readable interaction logs (audit): `transcripts/*.md`")
     lines.append("- Per-cell metrics: `records.json`")
     lines.append("- Aggregates: `summary_treatment.csv`, `summary_cell.csv`, `summary_delta.csv`")
     lines.append("")
