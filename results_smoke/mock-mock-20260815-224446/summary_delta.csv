@@ -1,3 +1,0 @@
-treatment_id,treatment_name,mean_delta_sr,cohens_d,p_value,n_tasks
-T0,control,0.0,,,2
-T1,emotional-appeal,0.0,,,2

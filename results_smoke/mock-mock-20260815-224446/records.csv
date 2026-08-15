@@ -1,9 +1,0 @@
-task_id,category,difficulty,treatment_id,treatment_name,run_index,model,scorer,passed,score,final_text,error_msg,latency_s,tokens,prompt_tokens,completion_tokens,tool_calls,errors,cot_depth
-tool-calc-chain,tool-use,hard,T0,control,0,mock,exact,False,0.0,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
-tool-calc-chain,tool-use,hard,T0,control,1,mock,exact,False,0.0,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
-tool-calc-chain,tool-use,hard,T1,emotional-appeal,0,mock,exact,False,0.0,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
-tool-calc-chain,tool-use,hard,T1,emotional-appeal,1,mock,exact,False,0.0,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
-creative-slogan,creative,easy,T0,control,0,mock,judge,True,0.5,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
-creative-slogan,creative,easy,T0,control,1,mock,judge,True,0.5,This is a deterministic mock response.,,0.003,15,10,5,0,0,0
-creative-slogan,creative,easy,T1,emotional-appeal,0,mock,judge,True,0.5,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
-creative-slogan,creative,easy,T1,emotional-appeal,1,mock,judge,True,0.5,This is a deterministic mock response.,,0.002,15,10,5,0,0,0
